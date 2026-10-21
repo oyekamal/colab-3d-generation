@@ -1,0 +1,202 @@
+<title>Islamabad Runner 3D Assets</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<style>
+/* Layout: one working view. Big rotatable model on the left, source sprite + verdict on the right, a six-item strip under both. */
+:root{
+  --bg:#e9ebe4;            /* road-dust grey with a green bias */
+  --panel:#f5f6f1;
+  --fg:#20241f;
+  --muted:#5d645a;
+  --line:#c9cdc1;
+  --accent:#d4501a;        /* traffic-cone orange */
+  --good:#2f7a45; --ok:#9a6b0c; --weak:#b3342a;
+  --stage:#d8dbd1;
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171a;--panel:#1c2024;--fg:#e8eae3;--muted:#9aa194;--line:#31373b;--accent:#ee7440;
+  --good:#6cc384;--ok:#e0b04c;--weak:#f0776d;--stage:#23282c;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171a;--panel:#1c2024;--fg:#e8eae3;--muted:#9aa194;--line:#31373b;--accent:#ee7440;
+  --good:#6cc384;--ok:#e0b04c;--weak:#f0776d;--stage:#23282c;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:20px}
+header{display:grid;gap:6px}
+h1{font:700 clamp(34px,6vw,56px)/0.95 var(--f-display);letter-spacing:.01em;text-transform:uppercase;margin:0;text-wrap:balance}
+h1 span{color:var(--accent)}
+.lede{margin:0;max-width:62ch;color:var(--muted)}
+.main{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px}
+@media (max-width:820px){.main{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:6px;aspect-ratio:4/3;min-height:280px;overflow:hidden}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#gl:active{cursor:grabbing}
+.tools{position:absolute;left:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
+.tools button,.pick button{font:500 12px/1 var(--f-mono);letter-spacing:.04em;text-transform:uppercase}
+.tools button{padding:8px 10px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;cursor:pointer}
+.tools button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.hint{position:absolute;right:10px;top:10px;font:400 11px var(--f-mono);color:var(--muted);background:var(--panel);padding:4px 8px;border-radius:4px;border:1px solid var(--line)}
+.nogl{position:absolute;inset:0;display:none;place-items:center;padding:20px;text-align:center;color:var(--muted)}
+.side{display:grid;gap:12px;align-content:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;display:grid;gap:10px;min-width:0}
+.label{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sprite{display:grid;place-items:center;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/16px 16px;border-radius:4px;padding:8px}
+.sprite img{width:100%;max-width:230px;height:auto;image-rendering:pixelated;display:block}
+.verdict{display:flex;align-items:center;gap:10px}
+.pill{font:700 15px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;padding:6px 10px 5px;border-radius:3px;color:var(--bg);background:var(--muted)}
+.pill.good{background:var(--good)}.pill.ok{background:var(--ok)}.pill.weak{background:var(--weak)}
+h2{font:700 26px/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;margin:0}
+.note{margin:0}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font:400 12px var(--f-mono);font-variant-numeric:tabular-nums}
+dt{color:var(--muted)} dd{margin:0;text-align:right}
+.pick{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:820px){.pick{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.pick button{display:grid;gap:6px;justify-items:center;padding:8px 6px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:5px;cursor:pointer;min-width:0}
+.pick button img{width:100%;max-width:64px;aspect-ratio:1;object-fit:contain;image-rendering:pixelated}
+.pick button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick button .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pick button[aria-pressed="true"]{border-color:var(--accent);outline:2px solid var(--accent);outline-offset:-2px}
+.angles{display:grid;gap:8px}
+.angles .strip{overflow-x:auto;border-radius:4px;border:1px solid var(--line)}
+.angles img{display:block;height:auto;min-width:640px;width:100%}
+footer{font:400 12px/1.6 var(--f-mono);color:var(--muted);max-width:90ch}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Islamabad Runner <span>in 3D</span></h1>
+    <p class="lede">Six sprites from the game, turned into meshes by Hunyuan3D-2mini on a free Colab T4. Drag to rotate, scroll to zoom. Shapes only: the model makes grey clay, not paint.</p>
+  </header>
+
+  <section class="main" aria-label="Model viewer">
+    <div class="stage">
+      <canvas id="gl" aria-label="Rotatable 3D model"></canvas>
+      <div class="hint">drag · scroll</div>
+      <div class="tools">
+        <button id="spin" type="button" aria-pressed="true">Auto-spin</button>
+        <button id="wire" type="button" aria-pressed="false">Wireframe</button>
+      </div>
+      <div class="nogl" id="nogl">This browser could not start 3D. The four-angle render below shows the same model.</div>
+    </div>
+    <aside class="side">
+      <div class="card">
+        <span class="label">Input sprite</span>
+        <div class="sprite"><img id="sprite" alt="Source sprite"></div>
+      </div>
+      <div class="card">
+        <div class="verdict"><span class="pill" id="pill"></span><h2 id="name"></h2></div>
+        <p class="note" id="note"></p>
+        <dl id="stats"></dl>
+      </div>
+    </aside>
+  </section>
+
+  <nav class="pick" id="pick" aria-label="Choose an asset"></nav>
+
+  <section class="angles">
+    <span class="label" id="anglesLabel">Front · three-quarter · side · top (Blender clay render)</span>
+    <div class="strip"><img id="angles" alt="Four rendered angles of the selected model"></div>
+  </section>
+
+  <footer>
+    Hunyuan3D-2mini turbo, shape only, 5 steps, simplified to 30,000 faces. Peak GPU memory 4.6 GB on a Colab T4. Flat side-view sprites give the model one angle to guess from, so vehicles and people come out better than thin flat cut-outs.
+  </footer>
+</div>
+
+<script type="module">
+const ASSETS = /*ASSETS*/;
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = (id) => document.getElementById(id);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const state = { i: 0, spin: !reduced, wire: false, model: null };
+
+/* picker */
+const pick = $('pick');
+ASSETS.forEach((a, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.id = 'pick-' + a.id;
+  b.innerHTML = `<img alt="" src="${a.sprite}"><span>${a.label}</span><i class="dot" style="background:var(--${a.grade})"></i>`;
+  b.addEventListener('click', () => select(i));
+  pick.appendChild(b);
+});
+
+/* three.js */
+let renderer, scene, camera, controls, group;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true, alpha: true });
+} catch (e) { $('nogl').style.display = 'grid'; }
+
+const clay = new THREE.MeshStandardMaterial({ color: 0xd2c9ba, roughness: 0.75, metalness: 0.0, flatShading: false });
+if (renderer) {
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(35, 4 / 3, 0.05, 100);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x6b7a8c, 1.1));
+  const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(3, 5, 4); scene.add(key);
+  const fill = new THREE.DirectionalLight(0xbcd0ff, 0.8); fill.position.set(-4, 2, -3); scene.add(fill);
+  group = new THREE.Group(); scene.add(group);
+  controls = new OrbitControls(camera, $('gl'));
+  controls.enableDamping = true; controls.autoRotateSpeed = 1.4;
+  new ResizeObserver(resize).observe($('gl').parentElement);
+  resize();
+  renderer.setAnimationLoop(() => { controls.autoRotate = state.spin; controls.update(); renderer.render(scene, camera); });
+}
+
+function resize() {
+  const el = $('gl').parentElement, w = el.clientWidth, h = el.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+
+const loader = new GLTFLoader();
+const cache = new Map();
+function b64ToBuf(b64) { const s = atob(b64), u = new Uint8Array(s.length); for (let k = 0; k < s.length; k++) u[k] = s.charCodeAt(k); return u.buffer; }
+
+function load(a) {
+  return new Promise((res, rej) => {
+    if (cache.has(a.id)) return res(cache.get(a.id));
+    loader.parse(b64ToBuf(a.glb), '', (g) => {
+      const obj = g.scene;
+      obj.traverse((m) => { if (m.isMesh) { m.material = clay; m.geometry.computeVertexNormals(); } });
+      const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+      obj.position.sub(c);                           // centre on origin
+      const holder = new THREE.Group(); holder.add(obj);
+      holder.scale.setScalar(2 / Math.max(size.x, size.y, size.z));
+      cache.set(a.id, holder); res(holder);
+    }, rej);
+  });
+}
+
+async function select(i) {
+  state.i = i; const a = ASSETS[i];
+  [...pick.children].forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+  $('sprite').src = a.sprite; $('sprite').alt = 'Source sprite: ' + a.label;
+  $('name').textContent = a.label;
+  $('pill').textContent = a.verdict; $('pill').className = 'pill ' + a.grade;
+  $('note').textContent = a.note;
+  $('stats').innerHTML = a.stats.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  $('angles').src = a.angles;
+  if (!renderer) return;
+  const holder = await load(a);
+  if (state.i !== i) return;
+  group.clear(); group.add(holder);
+  clay.wireframe = state.wire;
+  camera.position.set(2.6, 1.3, 3.4); controls.target.set(0, 0, 0); controls.update();
+}
+
+$('spin').addEventListener('click', (e) => { state.spin = !state.spin; e.currentTarget.setAttribute('aria-pressed', String(state.spin)); });
+$('wire').addEventListener('click', (e) => { state.wire = !state.wire; clay.wireframe = state.wire; e.currentTarget.setAttribute('aria-pressed', String(state.wire)); });
+$('spin').setAttribute('aria-pressed', String(state.spin));
+select(0);
+</script>
