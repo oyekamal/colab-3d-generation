@@ -37,12 +37,14 @@ token = cr.get_credentials().token
 assignment = None
 for attempt in range(1, 80):
     try:
+        token = cr.get_credentials().token      # refreshed every try: the token expires after about an hour
         assignment = cr.allocate_runtime(token, "T4", False)
         break
-    except _real_requests.HTTPError as e:
-        if e.response is None or e.response.status_code != 412:
-            raise
-        print(f"assign refused (412), attempt {attempt}; retry in 45 s", flush=True)
+    except (_real_requests.HTTPError, _real_requests.ConnectionError, _real_requests.Timeout) as e:
+        code = getattr(getattr(e, "response", None), "status_code", None)
+        if code is not None and code not in (412, 429, 500, 502, 503, 504):
+            raise   # a real error (auth, bad request): do not loop on it
+        print(f"assign not granted ({code or type(e).__name__}), attempt {attempt}; retry in 45 s", flush=True)
         time.sleep(45)
 if not assignment:
     sys.exit("never granted")
