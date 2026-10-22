@@ -24,7 +24,7 @@ jobs.mkdir(parents=True, exist_ok=True)
 
 def _long(fn):
     def wrapped(*a, **k):
-        k["timeout"] = max(k.get("timeout") or 0, 180)
+        k["timeout"] = max(k.get("timeout") or 0, 420)   # Colab can take minutes to provision; a shorter client timeout leaks the runtime it assigns afterwards
         return fn(*a, **k)
     return wrapped
 
