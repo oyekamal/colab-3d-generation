@@ -56,6 +56,21 @@ Colab's current image breaks a plain `pip install`. The notebook handles this, b
 - **`hy3dgen --no-deps`**: keeps Colab's own torch instead of replacing it.
 - **Restart after installing**: otherwise numpy and scipy fail with `_blas_supports_fpe`.
 
+## Model storage (Google Drive)
+
+The notebook uses a small helper, `get_model()`, instead of a plain download:
+
+1. It mounts Google Drive (Colab asks you to allow it) and keeps models in `MyDrive/colab-models/hunyuan3d-2mini`.
+2. If a **complete** copy is already there, it is used as it is, with no download. A copy counts as complete only when a marker file was written after a finished download.
+3. If it is missing, the helper asks Hugging Face how big the download is and compares that with your free Drive space. If it fits, it downloads straight into Drive. If it does not fit, it uses the session's disk and tells you.
+4. An interrupted download is resumed, not restarted. Nothing is ever deleted.
+
+At about 7.6 GB it **fits** in a free Google Drive (15 GB in total), so on the first run it is saved there and later sessions skip the download.
+
+Say no to the Drive prompt, or set `USE_DRIVE = False` in the helper cell, to always use the session's disk.
+
+**The Google Drive step is new and has not been run in Colab yet.** The model-download cell in this notebook was replaced by `get_model()` after the tested run described here. I tested that helper's logic on its own against a real Hugging Face repo with a stand-in Drive folder (five cases: downloads into Drive, reuses a finished copy without downloading, falls back to the local disk when Drive is too small, repairs an interrupted download, and the `USE_DRIVE = False` switch), and I checked that every notebook cell parses. I have not run the real Drive mount (it needs your click to allow access), nor the edited notebook end to end. If something fails, please open an issue with the error text.
+
 ## Making a viewer page
 
 [`examples/build_viewer.py`](examples/build_viewer.py) bakes the six models into one self-contained HTML page with a rotatable three.js viewer, a wireframe toggle, and the four-angle render for each. [`tools/render_glb.py`](tools/render_glb.py) makes the four-angle sheets in headless Blender.
@@ -73,7 +88,7 @@ The `tools/` folder holds the scripts used to drive Colab from a terminal throug
 
 Tested on 2026-10-21: install, model load, and generation for all six objects on a free Colab T4, run through the scripts above. The `.glb` files and renders in this repo are the real output of that run.
 
-Not tested: the notebook itself, end to end, as published. Its cells use the same commands that worked in the scripted run, but nobody has run the notebook in the Colab page yet. If a cell fails, please open an issue with the error. Also not tried: texture generation, other input sizes, and other seeds.
+Not tested: the notebook itself, end to end, as published (and the Google Drive step described above, which was added after that run). Its cells use the same commands that worked in the scripted run, but nobody has run the notebook in the Colab page yet. If a cell fails, please open an issue with the error. Also not tried: texture generation, other input sizes, and other seeds.
 
 ## Licences
 
